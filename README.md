@@ -30,7 +30,7 @@ PrivAgent is a Chrome extension that reimagines web browsing by putting user pri
 
 1. **Download the Extension**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/gokulkannanganesamoorthy/private-agent-chrome-extension.git
    cd chrome_extension
    ```
 

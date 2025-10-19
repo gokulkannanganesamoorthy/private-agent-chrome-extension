@@ -1,4 +1,4 @@
-/**
+/*
  * PrivAgent Options Page JavaScript
  * Privacy settings management and user preferences
  */

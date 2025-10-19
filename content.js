@@ -16,26 +16,42 @@ class PrivAgentContent {
   }
 
   async initialize() {
-    // Load privacy engine
-    await this.loadPrivacyEngine();
-    
-    // Set up message listener
-    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-      this.handleMessage(request, sender, sendResponse);
-      return true;
-    });
-    
-    // Analyze page on load
-    this.analyzePage();
-    
-    // Set up privacy indicator
-    this.createPrivacyIndicator();
-    
-    // Monitor for new forms
-    this.observeDOMChanges();
-    
-    // Add keyboard shortcuts
-    this.setupKeyboardShortcuts();
+    try {
+      console.log('PrivAgent Content Script initializing...');
+      
+      // Load privacy engine
+      await this.loadPrivacyEngine();
+      
+      // Set up message listener
+      chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        this.handleMessage(request, sender, sendResponse);
+        return true; // Keep the message channel open for async responses
+      });
+      
+      // Analyze page on load
+      this.analyzePage();
+      
+      // Set up privacy indicator
+      this.createPrivacyIndicator();
+      
+      // Monitor for new forms
+      this.observeDOMChanges();
+      
+      // Add keyboard shortcuts
+      this.setupKeyboardShortcuts();
+      
+      // Signal successful initialization
+      chrome.runtime.sendMessage({ 
+        action: 'contentScriptReady',
+        url: window.location.href 
+      }).catch(() => {
+        // Background script might not be ready yet, that's okay
+      });
+      
+      console.log('PrivAgent Content Script initialized successfully');
+    } catch (error) {
+      console.error('PrivAgent Content Script initialization failed:', error);
+    }
   }
 
   async loadPrivacyEngine() {
@@ -58,41 +74,94 @@ class PrivAgentContent {
   }
 
   handleMessage(request, sender, sendResponse) {
-    switch (request.action) {
-      case 'fillFormPrivately':
-        this.fillFormPrivately(request.data).then(sendResponse);
-        break;
-        
-      case 'extractContent':
-        const content = this.extractPageContent(request.query);
-        sendResponse(content);
-        break;
-        
-      case 'analyzeElement':
-        const analysis = this.analyzeElement(request.selector);
-        sendResponse(analysis);
-        break;
-        
-      case 'clickElement':
-        this.clickElement(request.selector).then(sendResponse);
-        break;
-        
-      case 'typeText':
-        this.typeText(request.selector, request.text).then(sendResponse);
-        break;
-        
-      case 'activate':
-        this.activateAgent();
-        sendResponse({ success: true });
-        break;
-        
-      case 'deactivate':
-        this.deactivateAgent();
-        sendResponse({ success: true });
-        break;
-        
-      default:
-        sendResponse({ success: false, error: 'Unknown action' });
+    try {
+      console.log('PrivAgent Content Script received message:', request.action);
+      
+      switch (request.action) {
+        case 'fillFormPrivately':
+          this.fillFormPrivately(request.data)
+            .then(sendResponse)
+            .catch(error => {
+              console.error('Error in fillFormPrivately:', error);
+              sendResponse({ success: false, error: error.message });
+            });
+          break;
+          
+        case 'analyzePage':
+          try {
+            const pageAnalysis = this.analyzePage();
+            sendResponse(pageAnalysis);
+          } catch (error) {
+            console.error('Error in analyzePage:', error);
+            sendResponse({ success: false, error: error.message });
+          }
+          break;
+          
+        case 'checkSensitiveContent':
+          try {
+            const sensitiveContent = this.checkSensitiveContent();
+            sendResponse(sensitiveContent);
+          } catch (error) {
+            console.error('Error in checkSensitiveContent:', error);
+            sendResponse({ sensitiveFieldsCount: 0, error: error.message });
+          }
+          break;
+          
+        case 'extractContent':
+          try {
+            const content = this.extractPageContent(request.query);
+            sendResponse(content);
+          } catch (error) {
+            console.error('Error in extractContent:', error);
+            sendResponse({ success: false, error: error.message });
+          }
+          break;
+          
+        case 'analyzeElement':
+          try {
+            const analysis = this.analyzeElement(request.selector);
+            sendResponse(analysis);
+          } catch (error) {
+            console.error('Error in analyzeElement:', error);
+            sendResponse({ success: false, error: error.message });
+          }
+          break;
+          
+        case 'clickElement':
+          this.clickElement(request.selector)
+            .then(sendResponse)
+            .catch(error => {
+              console.error('Error in clickElement:', error);
+              sendResponse({ success: false, error: error.message });
+            });
+          break;
+          
+        case 'typeText':
+          this.typeText(request.selector, request.text)
+            .then(sendResponse)
+            .catch(error => {
+              console.error('Error in typeText:', error);
+              sendResponse({ success: false, error: error.message });
+            });
+          break;
+          
+        case 'activate':
+          this.activateAgent();
+          sendResponse({ success: true });
+          break;
+          
+        case 'deactivate':
+          this.deactivateAgent();
+          sendResponse({ success: true });
+          break;
+          
+        default:
+          console.warn('Unknown action received:', request.action);
+          sendResponse({ success: false, error: 'Unknown action: ' + request.action });
+      }
+    } catch (error) {
+      console.error('Error in handleMessage:', error);
+      sendResponse({ success: false, error: error.message });
     }
   }
 
@@ -112,6 +181,51 @@ class PrivAgentContent {
     });
     
     return pageContext;
+  }
+
+  checkSensitiveContent() {
+    const sensitiveFields = this.findSensitiveFields();
+    const forms = this.analyzeForms();
+    
+    return {
+      sensitiveFieldsCount: sensitiveFields.length,
+      formsCount: forms.length,
+      privacyRisk: this.assessPagePrivacyRisk(),
+      sensitiveFields: sensitiveFields,
+      forms: forms
+    };
+  }
+
+  analyzeElement(selector) {
+    try {
+      const element = document.querySelector(selector);
+      if (!element) {
+        return { success: false, error: 'Element not found' };
+      }
+
+      const analysis = {
+        success: true,
+        element: selector,
+        tagName: element.tagName,
+        type: element.type || null,
+        text: element.textContent?.trim() || '',
+        value: element.value || '',
+        isVisible: element.offsetParent !== null,
+        isClickable: element.tagName === 'BUTTON' || element.tagName === 'A' || element.onclick !== null
+      };
+
+      // Check if it's a form field
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(element.tagName)) {
+        const fieldAnalysis = this.privacyEngine.analyzeFormField(element);
+        analysis.isSensitive = fieldAnalysis.isSensitive;
+        analysis.sensitivityType = fieldAnalysis.sensitivityType;
+        analysis.shouldRedact = fieldAnalysis.shouldRedact;
+      }
+
+      return analysis;
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   }
 
   analyzeForms() {
@@ -241,33 +355,124 @@ class PrivAgentContent {
     const field = fieldData.element;
     const fieldName = field.name?.toLowerCase() || '';
     const fieldId = field.id?.toLowerCase() || '';
-    const fieldType = fieldData.analysis.sensitivityType;
+    const fieldType = field.type?.toLowerCase() || '';
+    const fieldPlaceholder = field.placeholder?.toLowerCase() || '';
+    const fieldLabel = this.getFieldLabel(field)?.toLowerCase() || '';
     
-    // Map field types to user data keys
-    const dataMapping = {
-      email: ['email', 'emailAddress', 'userEmail'],
-      phone: ['phone', 'phoneNumber', 'mobile', 'telephone'],
-      address: ['address', 'streetAddress', 'homeAddress'],
-      name: ['name', 'fullName', 'firstName', 'lastName'],
-      city: ['city', 'locality'],
-      state: ['state', 'region'],
-      zip: ['zip', 'zipCode', 'postalCode']
+    // Enhanced field matching patterns
+    const patterns = {
+      // Email patterns
+      email: {
+        keywords: ['email', 'e-mail', 'mail', 'login', 'username', 'user'],
+        value: userData.email
+      },
+      // Name patterns
+      name: {
+        keywords: ['name', 'fullname', 'full-name', 'user-name', 'username'],
+        value: userData.name
+      },
+      firstName: {
+        keywords: ['firstname', 'first-name', 'fname', 'givenname'],
+        value: userData.firstName
+      },
+      lastName: {
+        keywords: ['lastname', 'last-name', 'lname', 'surname', 'familyname'],
+        value: userData.lastName
+      },
+      // Contact patterns
+      phone: {
+        keywords: ['phone', 'telephone', 'mobile', 'cell', 'tel'],
+        value: userData.phone
+      },
+      // Address patterns
+      address: {
+        keywords: ['address', 'street', 'addr', 'location'],
+        value: userData.address
+      },
+      city: {
+        keywords: ['city', 'town', 'locality'],
+        value: userData.city
+      },
+      state: {
+        keywords: ['state', 'province', 'region'],
+        value: userData.state
+      },
+      zip: {
+        keywords: ['zip', 'postal', 'postcode', 'zipcode'],
+        value: userData.zip
+      },
+      country: {
+        keywords: ['country', 'nation'],
+        value: userData.country
+      }
     };
     
-    // First try direct field name/id match
+    // First try exact matches
     if (userData[fieldName]) return userData[fieldName];
     if (userData[fieldId]) return userData[fieldId];
     
-    // Try mapped field types
-    const mappings = dataMapping[fieldType] || [];
-    for (const mapping of mappings) {
-      if (userData[mapping]) return userData[mapping];
+    // Try pattern matching
+    const searchText = `${fieldName} ${fieldId} ${fieldPlaceholder} ${fieldLabel}`.toLowerCase();
+    
+    for (const [patternKey, pattern] of Object.entries(patterns)) {
+      if (pattern.value) {
+        for (const keyword of pattern.keywords) {
+          if (searchText.includes(keyword)) {
+            console.log(`Matched field "${field.name || field.id}" with pattern "${keyword}" -> ${patternKey}`);
+            return pattern.value;
+          }
+        }
+      }
+    }
+    
+    // Special handling for input types
+    if (fieldType === 'email' && userData.email) return userData.email;
+    if (fieldType === 'tel' && userData.phone) return userData.phone;
+    if (fieldType === 'text' || fieldType === '') {
+      // For generic text fields, try common patterns
+      if (searchText.includes('email') || searchText.includes('login')) return userData.email;
+      if (searchText.includes('name')) return userData.name;
     }
     
     return null;
   }
 
+  getFieldLabel(field) {
+    // Try to find associated label
+    let label = null;
+    
+    // Check for label with for attribute
+    if (field.id) {
+      label = document.querySelector(`label[for="${field.id}"]`);
+      if (label) return label.textContent.trim();
+    }
+    
+    // Check for parent label
+    label = field.closest('label');
+    if (label) return label.textContent.trim();
+    
+    // Check for preceding text/label
+    const prevSibling = field.previousElementSibling;
+    if (prevSibling && (prevSibling.tagName === 'LABEL' || prevSibling.textContent)) {
+      return prevSibling.textContent.trim();
+    }
+    
+    // Check for aria-label
+    if (field.getAttribute('aria-label')) {
+      return field.getAttribute('aria-label');
+    }
+    
+    // Check for title attribute
+    if (field.title) {
+      return field.title;
+    }
+    
+    return '';
+  }
+
   async fillField(field, value) {
+    console.log(`Filling field: ${field.name || field.id || 'unnamed'} with value: ${value}`);
+    
     // Focus the field
     field.focus();
     
