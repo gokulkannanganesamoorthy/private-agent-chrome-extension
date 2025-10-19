@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrivAgent Settings - Privacy Controls</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo">
+        <span class="shield">🛡️</span>
+        <h1>PrivAgent Settings</h1>
+      </div>
+      <div class="subtitle">Complete control over your privacy</div>
+    </header>
+
+    <main class="main-content">
+      <!-- Privacy Level -->
+      <section class="setting-group">
+        <div class="setting-header">
+          <h2>Privacy Protection Level</h2>
+          <p>Choose your preferred privacy and security configuration</p>
+        </div>
+        
+        <div class="setting-options">
+          <label class="radio-option">
+            <input type="radio" name="privacyLevel" value="enterprise" id="privacy-enterprise">
+            <div class="option-content">
+              <div class="option-title">🏢 Enterprise Grade</div>
+              <div class="option-description">Maximum security with compliance features (GDPR, HIPAA, CCPA)</div>
+            </div>
+          </label>
+          
+          <label class="radio-option">
+            <input type="radio" name="privacyLevel" value="maximum" id="privacy-maximum">
+            <div class="option-content">
+              <div class="option-title">🔒 Maximum Protection</div>
+              <div class="option-description">Block all external requests, comprehensive threat detection</div>
+            </div>
+          </label>
+          
+          <label class="radio-option">
+            <input type="radio" name="privacyLevel" value="high" id="privacy-high" checked>
+            <div class="option-content">
+              <div class="option-title">🛡️ High Protection (Recommended)</div>
+              <div class="option-description">Advanced filtering with enhanced security features</div>
+            </div>
+          </label>
+          
+          <label class="radio-option">
+            <input type="radio" name="privacyLevel" value="balanced" id="privacy-balanced">
+            <div class="option-content">
+              <div class="option-title">⚖️ Balanced</div>
+              <div class="option-description">Good privacy protection while maintaining usability</div>
+            </div>
+          </label>
+          
+          <label class="radio-option">
+            <input type="radio" name="privacyLevel" value="custom" id="privacy-custom">
+            <div class="option-content">
+              <div class="option-title">⚙️ Custom Configuration</div>
+              <div class="option-description">Configure individual privacy settings manually</div>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <!-- Compliance & Regulations -->
+      <section class="setting-group">
+        <div class="setting-header">
+          <h2>Compliance & Regulations</h2>
+          <p>Enable compliance features for specific regulations</p>
+        </div>
+        
+        <div class="setting-toggles">
+          <label class="toggle-option">
+            <div class="toggle-content">
+              <div class="toggle-title">GDPR Compliance</div>
+              <div class="toggle-description">European General Data Protection Regulation compliance</div>
+            </div>
+            <div class="toggle-switch">
+              <input type="checkbox" id="gdpr-compliance" checked>
+              <span class="slider"></span>
+            </div>
+          </label>
+          
+          <label class="toggle-option">
+            <div class="toggle-content">
+              <div class="toggle-title">CCPA Compliance</div>
+              <div class="toggle-description">California Consumer Privacy Act compliance</div>
+            </div>
+            <div class="toggle-switch">
+              <input type="checkbox" id="ccpa-compliance" checked>
+              <span class="slider"></span>
+            </div>
+          </label>
+          
+          <label class="toggle-option">
+            <div class="toggle-content">
+              <div class="toggle-title">HIPAA Compliance</div>
+              <div class="toggle-description">Health Insurance Portability and Accountability Act</div>
+            </div>
+            <div class="toggle-switch">
+              <input type="checkbox" id="hipaa-compliance">
+              <span class="slider"></span>
+            </div>
+          </label>
+          
+          <label class="toggle-option">
+            <div class="toggle-content">
+              <div class="toggle-title">SOX Compliance</div>
+              <div class="toggle-description">Sarbanes-Oxley Act financial compliance</div>
+            </div>
+            <div class="toggle-switch">
+              <input type="checkbox" id="sox-compliance">
+              <span class="slider"></span>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <!-- Data Protection -->
+      <section class="setting-group">
+        <div class="setting-header">
+          <h2>Data Protection</h2>
+          <p>Configure comprehensive data protection settings</p>
+        </div>
+        
+        <div class="setting-toggles">
+          <label class="toggle-option">
+            <div class="toggle-content">
+              <div class="toggle-title">Auto-Redact Sensitive Data</div>
+              <div class="toggle-description">Automatically detect and protect PII, financial data, and credentials</div>
+            </div>
+            <div class="toggle-switch">
+              <input type="checkbox" id="auto-redact" checked>
+              <span class="slider"></span>
+            </div>
+          </label>
+          
+          <label class="toggle-option">
+            <div class="toggle-content">
+              <div class="toggle-title">Real-time Threat Detection</div>
+              <div class="toggle-description">Monitor for phishing, social engineering, and data exfiltration</div>
+            </div>
+            <div class="toggle-switch">
+              <input type="checkbox" id="threat-detection" checked>
+              <span class="slider"></span>
+            </div>
+          </label>
+          
+          <label class="toggle-option">
+            <div class="toggle-content">
+              <div class="toggle-title">Block External Requests</div>
+              <div class="toggle-description">Prevent any sensitive data from being sent externally</div>
+            </div>
+            <div class="toggle-switch">
+              <input type="checkbox" id="block-external" checked>
+              <span class="slider"></span>
+            </div>
+          </label>
+          
+          <label class="toggle-option">
+            <div class="toggle-content">
+              <div class="toggle-title">Privacy Notifications</div>
+              <div class="toggle-description">Real-time alerts for privacy threats and sensitive data detection</div>
+            </div>
+            <div class="toggle-switch">
+              <input type="checkbox" id="show-notifications" checked>
+              <span class="slider"></span>
+            </div>
+          </label>
+          
+          <label class="toggle-option">
+            <div class="toggle-content">
+              <div class="toggle-title">Enhanced Form Protection</div>
+              <div class="toggle-description">Advanced security for authentication and payment forms</div>
+            </div>
+            <div class="toggle-switch">
+              <input type="checkbox" id="enhanced-forms" checked>
+              <span class="slider"></span>
+            </div>
+          </label>
+          
+          <label class="toggle-option">
+            <div class="toggle-content">
+              <div class="toggle-title">Data Encryption</div>
+              <div class="toggle-description">Encrypt sensitive data before local storage</div>
+            </div>
+            <div class="toggle-switch">
+              <input type="checkbox" id="data-encryption" checked>
+              <span class="slider"></span>
+            </div>
+          </label>
+          
+          <label class="toggle-option">
+            <div class="toggle-content">
+              <div class="toggle-title">Audit Logging</div>
+              <div class="toggle-description">Maintain detailed logs of privacy protection activities</div>
+            </div>
+            <div class="toggle-switch">
+              <input type="checkbox" id="audit-logging" checked>
+              <span class="slider"></span>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <!-- Whitelist/Blacklist Management -->
+      <section class="setting-group">
+        <div class="setting-header">
+          <h2>Domain Management</h2>
+          <p>Manage trusted and blocked domains for enhanced security</p>
+        </div>
+        
+        <div class="domain-management">
+          <div class="management-section">
+            <h3>Trusted Domains (Whitelist)</h3>
+            <div class="domain-input">
+              <input type="text" id="whitelist-input" placeholder="example.com">
+              <button id="add-whitelist" class="btn-primary">Add to Whitelist</button>
+            </div>
+            <div class="domain-list" id="whitelist-domains">
+              <div class="domain-item trusted">
+                <span>google.com</span>
+                <span class="domain-status">✅ Trusted</span>
+                <button class="remove-domain" data-domain="google.com">×</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="management-section">
+            <h3>Blocked Domains (Blacklist)</h3>
+            <div class="domain-input">
+              <input type="text" id="blacklist-input" placeholder="suspicious-site.com">
+              <button id="add-blacklist" class="btn-danger">Add to Blacklist</button>
+            </div>
+            <div class="domain-list" id="blacklist-domains">
+              <!-- Blocked domains will be populated here -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Personal Information -->
+      <section class="setting-group">
+        <div class="setting-header">
+          <h2>Personal Information</h2>
+          <p>Set your information for private form filling (stored locally only)</p>
+        </div>
+        
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="user-name">Full Name</label>
+            <input type="text" id="user-name" placeholder="John Doe">
+          </div>
+          
+          <div class="form-group">
+            <label for="user-email">Email Address</label>
+            <input type="email" id="user-email" placeholder="john@example.com">
+          </div>
+          
+          <div class="form-group">
+            <label for="user-phone">Phone Number</label>
+            <input type="tel" id="user-phone" placeholder="555-0123">
+          </div>
+          
+          <div class="form-group">
+            <label for="user-address">Street Address</label>
+            <input type="text" id="user-address" placeholder="123 Main St">
+          </div>
+          
+          <div class="form-group">
+            <label for="user-city">City</label>
+            <input type="text" id="user-city" placeholder="Anytown">
+          </div>
+          
+          <div class="form-group">
+            <label for="user-state">State/Region</label>
+            <input type="text" id="user-state" placeholder="CA">
+          </div>
+          
+          <div class="form-group">
+            <label for="user-zip">ZIP/Postal Code</label>
+            <input type="text" id="user-zip" placeholder="12345">
+          </div>
+          
+          <div class="form-group">
+            <label for="user-country">Country</label>
+            <input type="text" id="user-country" placeholder="United States">
+          </div>
+        </div>
+        
+        <div class="privacy-notice">
+          <div class="notice-icon">🔐</div>
+          <div class="notice-content">
+            <div class="notice-title">100% Private Storage</div>
+            <div class="notice-description">This information is stored only on your device and never transmitted externally.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Allowed Domains -->
+      <section class="setting-group">
+        <div class="setting-header">
+          <h2>Trusted Domains</h2>
+          <p>Domains where PrivAgent can operate with reduced restrictions</p>
+        </div>
+        
+        <div class="domain-manager">
+          <div class="domain-input">
+            <input type="text" id="domain-input" placeholder="example.com">
+            <button id="add-domain" class="btn-primary">Add Domain</button>
+          </div>
+          
+          <div class="domain-list" id="domain-list">
+            <div class="domain-item">
+              <span>google.com</span>
+              <button class="remove-domain" data-domain="google.com">×</button>
+            </div>
+            <div class="domain-item">
+              <span>github.com</span>
+              <button class="remove-domain" data-domain="github.com">×</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Privacy Statistics -->
+      <section class="setting-group">
+        <div class="setting-header">
+          <h2>Privacy Statistics</h2>
+          <p>Your privacy protection summary</p>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="total-protected">1,247</div>
+            <div class="stat-label">Items Protected</div>
+          </div>
+          
+          <div class="stat-item">
+            <div class="stat-value" id="threats-blocked">23</div>
+            <div class="stat-label">Threats Blocked</div>
+          </div>
+          
+          <div class="stat-item">
+            <div class="stat-value" id="local-processing">100%</div>
+            <div class="stat-label">Local Processing</div>
+          </div>
+          
+          <div class="stat-item">
+            <div class="stat-value" id="privacy-score">100</div>
+            <div class="stat-label">Privacy Score</div>
+          </div>
+        </div>
+        
+        <div class="stats-actions">
+          <button id="reset-stats" class="btn-secondary">Reset Statistics</button>
+          <button id="export-data" class="btn-secondary">Export Privacy Report</button>
+        </div>
+      </section>
+
+      <!-- Advanced Settings -->
+      <section class="setting-group">
+        <div class="setting-header">
+          <h2>Advanced Settings</h2>
+          <p>Fine-tune PrivAgent's behavior</p>
+        </div>
+        
+        <div class="advanced-settings">
+          <div class="setting-row">
+            <label for="sensitivity-threshold">Privacy Sensitivity Threshold</label>
+            <div class="range-input">
+              <input type="range" id="sensitivity-threshold" min="1" max="10" value="7">
+              <span class="range-value">7</span>
+            </div>
+          </div>
+          
+          <div class="setting-row">
+            <label for="processing-delay">Processing Delay (ms)</label>
+            <div class="range-input">
+              <input type="range" id="processing-delay" min="0" max="1000" value="100" step="50">
+              <span class="range-value">100</span>
+            </div>
+          </div>
+          
+          <label class="toggle-option">
+            <div class="toggle-content">
+              <div class="toggle-title">Debug Mode</div>
+              <div class="toggle-description">Show detailed privacy analysis in console</div>
+            </div>
+            <div class="toggle-switch">
+              <input type="checkbox" id="debug-mode">
+              <span class="slider"></span>
+            </div>
+          </label>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="save-status" id="save-status">All settings saved locally</div>
+      <div class="footer-actions">
+        <button id="reset-all" class="btn-danger">Reset All Settings</button>
+        <button id="save-settings" class="btn-primary">Save Settings</button>
+      </div>
+    </footer>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

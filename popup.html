@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrivAgent - Privacy Dashboard</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <span class="shield">🛡️</span>
+        <h1>PrivAgent</h1>
+      </div>
+      <div class="status" id="privacy-status">
+        <span class="status-dot active"></span>
+        <span>Privacy Protected</span>
+      </div>
+    </header>
+
+    <!-- Privacy Score -->
+    <section class="privacy-score">
+      <div class="score-circle">
+        <div class="score-value" id="privacy-score">100</div>
+        <div class="score-label">Privacy Score</div>
+      </div>
+      <div class="score-details">
+        <div class="detail">
+          <span class="detail-value" id="local-processing">100%</span>
+          <span class="detail-label">Local Processing</span>
+        </div>
+        <div class="detail">
+          <span class="detail-value" id="external-requests">0</span>
+          <span class="detail-label">External Requests</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Statistics -->
+    <section class="stats">
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-content">
+          <div class="stat-value" id="items-processed">0</div>
+          <div class="stat-label">Items Processed</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔒</div>
+        <div class="stat-content">
+          <div class="stat-value" id="items-filtered">0</div>
+          <div class="stat-label">Items Protected</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Command Interface -->
+    <section class="command-section">
+      <div class="command-header">
+        <h3>AI Assistant</h3>
+        <span class="privacy-badge">🔐 100% Private</span>
+      </div>
+      <div class="command-input">
+        <input type="text" id="command-input" placeholder="Enter command (processed locally)..." />
+        <button id="command-send" title="Send Command">
+          <span>➤</span>
+        </button>
+      </div>
+      <div class="command-suggestions" id="command-suggestions">
+        <button class="suggestion-btn" data-command="Fill this form privately">Fill Form</button>
+        <button class="suggestion-btn" data-command="Extract content from this page">Extract Content</button>
+        <button class="suggestion-btn" data-command="Navigate to google.com">Navigate</button>
+      </div>
+      <div class="command-response" id="command-response" style="display: none;">
+        <div class="response-header">
+          <span>Response</span>
+          <span class="privacy-indicator">🛡️ Privacy Protected</span>
+        </div>
+        <div class="response-content" id="response-content"></div>
+      </div>
+    </section>
+
+    <!-- Privacy Alerts -->
+    <section class="alerts" id="privacy-alerts" style="display: none;">
+      <div class="alert-header">
+        <span class="alert-icon">⚠️</span>
+        <span>Privacy Alerts</span>
+      </div>
+      <div class="alert-list" id="alert-list"></div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="actions">
+      <button class="action-btn primary" id="fill-forms">
+        <span class="btn-icon">📝</span>
+        Fill Forms Privately
+      </button>
+      <button class="action-btn secondary" id="analyze-page">
+        <span class="btn-icon">🔍</span>
+        Analyze Page
+      </button>
+    </section>
+
+    <!-- Settings Link -->
+    <footer class="footer">
+      <button id="open-settings" class="settings-link">
+        <span>⚙️</span>
+        Privacy Settings
+      </button>
+      <div class="version">v1.0.0</div>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

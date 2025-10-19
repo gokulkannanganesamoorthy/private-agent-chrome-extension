@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "PrivAgent - Privacy-Preserving Web Agent",
+  "version": "2.0.0",
+  "description": "Intelligent web automation that keeps your data private and secure",
+  
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "contextMenus"
+  ],
+  
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "PrivAgent Privacy Dashboard"
+  },
+  
+  "options_page": "options.html",
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["privacy-engine.js", "privacy-engine-pro.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
