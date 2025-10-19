@@ -1273,16 +1273,10 @@ After testing on any site:
 ## 📞 Contact Information
 
 ### Support Channels
-- **Documentation**: [Available in extension]
-- **Community Forum**: [Community support platform]
 - **Email Support**: gokulkannan.dev@gmail.com
-- **Enterprise Sales**: gokulkannan.dev@gmail.com
 
 ### Development Team
-- **Security Issues**: gokulkannan.dev@gmail.com
-- **Privacy Concerns**: gokulkannan.dev@gmail.com
-- **Feature Requests**: gokulkannan.dev@gmail.com
-- **Partnership Inquiries**: gokulkannan.dev@gmail.com
+- **GOKUL KANNAN GANESAMOORTHY**
 
 ---
 
