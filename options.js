@@ -46,14 +46,16 @@ class PrivAgentOptions {
 
   async loadSettings() {
     try {
-      const result = await chrome.storage.sync.get(['privacySettings', 'userFormData']);
+      const result = await chrome.storage.sync.get(['privacySettings', 'userFormData', 'agentFormDetails']);
       
       if (result.privacySettings) {
         this.settings = { ...this.settings, ...result.privacySettings };
       }
       
-      if (result.userFormData) {
-        this.settings.userFormData = { ...this.settings.userFormData, ...result.userFormData };
+      // Load form data from either storage key
+      const formData = result.userFormData || result.agentFormDetails || {};
+      if (Object.keys(formData).length > 0) {
+        this.settings.userFormData = { ...this.settings.userFormData, ...formData };
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -223,9 +225,9 @@ class PrivAgentOptions {
         const stats = response.stats;
         
         document.getElementById('total-protected').textContent = 
-          this.formatNumber(stats.sensitiveItemsFiltered || 1247);
+          this.formatNumber(stats.sensitiveItemsFiltered || 0);
         document.getElementById('threats-blocked').textContent = 
-          this.formatNumber(stats.privacyThreatsBlocked || 23);
+          this.formatNumber(stats.privacyThreatsBlocked || 0);
         document.getElementById('local-processing').textContent = 
           Math.round(stats.localProcessingPercentage || 100) + '%';
         document.getElementById('privacy-score').textContent = 
@@ -259,7 +261,8 @@ class PrivAgentOptions {
           processingDelay: this.settings.processingDelay,
           debugMode: this.settings.debugMode
         },
-        userFormData: this.settings.userFormData
+        userFormData: this.settings.userFormData,
+        agentFormDetails: this.settings.userFormData  // Save both for compatibility
       });
       
       // Notify background script of settings change

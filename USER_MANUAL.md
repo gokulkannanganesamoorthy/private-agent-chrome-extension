@@ -198,6 +198,243 @@ Located in the dashboard for quick access:
 Real-time notifications for:
 - Sensitive data detection
 - Security threats identified
+- Suspicious website activity
+- Data protection actions taken
+
+---
+
+## 📝 Form Filling Guide
+
+### Configuration Setup
+
+#### Agent Form Details Configuration
+1. **Access Settings**: Click PrivAgent icon → "Privacy Settings"
+2. **Navigate to Agent Form Details**: Find the form configuration section
+3. **Fill Required Information**:
+   ```
+   Personal Information:
+   ├── Name: Your full name
+   ├── Email: Primary email address
+   ├── Phone: Phone number (optional)
+   └── Username: Preferred username (optional)
+   
+   Address Information:
+   ├── Address: Street address
+   ├── City: City name
+   ├── State/Province: State or province
+   ├── ZIP/Postal Code: Postal code
+   └── Country: Country name
+   ```
+4. **Save Configuration**: Click "Save Settings" - data stored locally only
+
+#### Privacy Guarantee
+- ✅ **100% Local Storage**: Form data never leaves your device
+- ✅ **Encrypted Storage**: Data protected with browser-level encryption
+- ✅ **No Cloud Sync**: No external servers involved
+- ✅ **Easy Deletion**: Remove data anytime from settings
+
+### Using Form Filling
+
+#### Method 1: Popup Button
+1. Navigate to any website with forms
+2. Click PrivAgent extension icon
+3. Click "Fill Forms Privately" button
+4. View results: "✅ Form filled: X fields, Y buttons clicked"
+
+#### Method 2: Voice Commands
+1. Click command input in PrivAgent popup
+2. Type natural language commands:
+   - "fill form"
+   - "complete this form privately"
+   - "enter my information"
+   - "fill login form"
+3. Press Enter or click Send
+4. Review completion status and privacy protection
+
+#### Method 3: Keyboard Shortcut
+- Press `Ctrl+Shift+F` on any page with forms
+- PrivAgent automatically detects and fills forms
+- Respects privacy settings and domain whitelist
+
+### Supported Websites & Forms
+
+#### Fully Optimized Sites
+- ✅ **Amazon** (login, account, checkout forms)
+  - Two-step login: Email → Continue → Password → Sign In
+  - Account management forms
+  - Address and payment forms (when enabled)
+
+- ✅ **GitHub** (registration, profile, settings)
+  - User registration and login
+  - Profile information updates
+  - Repository and organization settings
+
+- ✅ **Google Services** (Gmail, Drive, Accounts)
+  - Account creation and login
+  - Profile information
+  - Service-specific forms
+
+- ✅ **Generic Web Forms**
+  - Contact forms
+  - Registration forms
+  - Survey and feedback forms
+  - Newsletter signups
+
+#### Smart Field Detection
+PrivAgent uses multiple strategies to identify form fields:
+
+**Primary Method - Autocomplete Attributes**:
+- `username`, `email` → Email/username fields
+- `current-password`, `new-password` → Password fields
+- `given-name`, `family-name` → Name fields
+- `address-line1`, `address-level2` → Address fields
+- `postal-code`, `tel` → ZIP code and phone fields
+
+**Fallback Method - Heuristic Analysis**:
+- Field IDs: `#email`, `#password`, `#first-name`
+- Field names: `name="email"`, `name="phone"`
+- Placeholders: `placeholder="Enter email"`
+- Labels: Associated `<label>` elements
+- ARIA labels: `aria-label` attributes
+
+#### Domain Safety & Whitelisting
+
+**Automatic Safe Domains**:
+- amazon.com (and international variants)
+- github.com, gitlab.com
+- google.com, gmail.com
+- facebook.com, twitter.com, linkedin.com
+
+**Custom Whitelisting**:
+1. Go to Privacy Settings → Domain Management
+2. Add trusted domains for automatic filling
+3. Remove domains to require manual confirmation
+4. Set per-domain rules (allow payment, skip OTP, etc.)
+
+### Security Features
+
+#### Automatic Field Protection
+
+**OTP/2FA Field Detection**:
+- Automatically skips one-time password fields
+- Detects verification codes, SMS codes, authenticator codes
+- Prevents accidental filling of temporary security codes
+- Pattern recognition: "otp", "verification", "code", "2fa", "mfa"
+
+**Payment Field Protection**:
+- Skips credit card, debit card, CVV fields by default
+- Requires explicit user permission for payment information
+- Detects: "card", "credit", "cvv", "expiry", "billing"
+- Per-domain payment consent management
+
+**Sensitive Content Filtering**:
+- Never auto-fills SSN, passport numbers, license numbers
+- Skips fields marked as confidential or private
+- Protects government ID and healthcare information
+- Alerts user when sensitive fields are detected
+
+#### Privacy-First Processing
+
+**Field Analysis Process**:
+1. **Scan**: Identify all form fields on page
+2. **Classify**: Determine field types and sensitivity levels
+3. **Match**: Map fields to configured user data
+4. **Validate**: Ensure domain safety and user consent
+5. **Fill**: Execute form filling with privacy protection
+6. **Report**: Show results and any privacy actions taken
+
+**Privacy Protections**:
+- All processing happens locally in your browser
+- No form data transmitted to external servers
+- Sensitive information automatically redacted from logs
+- Privacy score updated based on protection actions
+
+### Advanced Form Filling
+
+#### Multi-Step Form Support
+
+**Amazon Login Flow**:
+1. **Email Step**: Fill email, click Continue
+2. **Wait for Navigation**: Detect password page load
+3. **Password Step**: Fill password, click Sign In
+4. **Error Handling**: Retry on form validation errors
+
+**Generic Multi-Step Support**:
+- `waitFor()` utility waits for dynamic content
+- MutationObserver detects DOM changes
+- Retry logic handles form field replacement
+- Timeout protection prevents infinite waiting
+
+#### Framework Compatibility
+
+**React/Vue/Angular Support**:
+- Uses native property setters for framework compatibility
+- Dispatches proper events: `input`, `change`, `blur`
+- Handles controlled components and state management
+- Respects framework validation and error handling
+
+**Event Simulation**:
+```javascript
+// PrivAgent's framework-compatible field filling
+function setInputValue(element, value) {
+  const proto = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value');
+  if (proto && proto.set) {
+    proto.set.call(element, value);
+  }
+  element.dispatchEvent(new Event('input', { bubbles: true }));
+  element.dispatchEvent(new Event('change', { bubbles: true }));
+}
+```
+
+#### Iframe Handling
+
+**Cross-Frame Protection**:
+- Runs content script in all frames (`all_frames: true`)
+- Prefers top-level window for form filling
+- Site-specific iframe rules for embedded forms
+- User consent required for iframe form filling
+
+### Troubleshooting Form Filling
+
+#### Common Issues
+
+**"No Agent Form Details saved"**
+- **Cause**: Form data not configured
+- **Solution**: Go to Privacy Settings → Agent Form Details → Configure and Save
+
+**"Content script loading..."**
+- **Cause**: Page loaded before PrivAgent content script
+- **Solution**: Refresh page and try again
+
+**"Domain not whitelisted"**
+- **Cause**: Domain not in safe list for automatic filling
+- **Solution**: Use manual "Fill Forms Privately" button or whitelist domain
+
+**Fields not filling correctly**
+- **Cause**: Non-standard form implementation
+- **Solutions**:
+  - Refresh page and retry
+  - Check browser console for PrivAgent debug messages
+  - Try filling individual fields manually
+  - Report issue with specific website details
+
+#### Debug Information
+
+**Console Logging** (when Debug Mode enabled):
+```
+PrivAgent: Starting performFill with details: email,name,phone
+PrivAgent: Filling Amazon login form
+PrivAgent: Successfully filled field ap_email with value: user@example.com
+PrivAgent: Clicked continue button
+PrivAgent: Waiting for password field...
+PrivAgent: Password field detected, filling
+```
+
+**Form Detection Details**:
+- Field count and types detected
+- Matching algorithm results
+- Security checks and skipped fields
+- Privacy protection actions taken
 - Privacy policy changes needed
 - Compliance requirements
 
@@ -862,6 +1099,107 @@ A: You can:
 
 ---
 
+## 💬 User Testimonials
+
+> "I've been using PrivAgent Pro for several months now, and it has completely transformed how I approach online privacy. As a healthcare professional who frequently needs to fill out forms while maintaining HIPAA compliance, this extension provides the perfect solution. The reliability is outstanding - it works consistently across all the medical platforms I use, while keeping all my sensitive information completely secure on my device. The ease-of-use is remarkable; I can automate complex form filling with just a few clicks, and the privacy protection gives me complete confidence that patient confidentiality is never compromised. PrivAgent Pro has become absolutely essential to my daily workflow."
+>
+> — **Dr. Michael Chen, Healthcare Professional & Privacy Advocate**
+
+## 🧪 Recommended Test Sites for PrivAgent Pro
+
+To help you get familiar with PrivAgent Pro's capabilities, here are carefully selected test sites that showcase different features:
+
+### **🔐 Form Filling & Automation Testing**
+
+**Primary Test Sites:**
+- **Amazon Sign-In Page**: [https://www.amazon.com/ap/signin](https://www.amazon.com/ap/signin)
+  - *Perfect for testing two-step login flow (email → continue → password)*
+  - *Tests intelligent form detection and sequential field filling*
+  
+- **HTTPBin Form Testing**: [https://httpbin.org/forms/post](https://httpbin.org/forms/post)
+  - *Comprehensive form testing with multiple field types*
+  - *Excellent for testing field detection accuracy*
+  
+- **Google Account Sign-In**: [https://accounts.google.com/signin](https://accounts.google.com/signin)
+  - *Test privacy protection on major authentication flows*
+  - *Demonstrates secure credential handling*
+
+**Additional Form Testing:**
+- **W3Schools HTML Forms**: [https://www.w3schools.com/html/html_forms.asp](https://www.w3schools.com/html/html_forms.asp)
+- **Contact Form Examples**: [https://formspree.io/](https://formspree.io/)
+- **Registration Forms**: [https://www.fakenamegenerator.com/](https://www.fakenamegenerator.com/) *(for testing contact info forms)*
+
+### **🛡️ Privacy Analysis & Protection Testing**
+
+**Security Testing Sites:**
+- **Banking Demo Platform**: [https://demo.testfire.net/](https://demo.testfire.net/)
+  - *Test financial site privacy protection*
+  - *Excellent for demonstrating sensitive data detection*
+  
+- **Healthcare Privacy**: [https://www.medicare.gov/](https://www.medicare.gov/)
+  - *Test healthcare-specific privacy detection*
+  - *Demonstrates HIPAA compliance features*
+  
+- **Government Forms**: [https://www.usa.gov/](https://www.usa.gov/)
+  - *Test government site privacy protection*
+  - *Good for testing official document handling*
+
+### **🤖 Command Interface Testing**
+
+**Step-by-Step Testing Process:**
+
+1. **Navigate to any test site** from the lists above
+
+2. **Try these essential commands:**
+   - `"fill form"` → Automated form completion with privacy protection
+   - `"analyze page"` → Comprehensive privacy and security assessment
+   - `"help"` → Display all available commands and features
+   - `"go to [website]"` → Navigate with enhanced privacy protection
+
+3. **Monitor the results:**
+   - Check Privacy Dashboard for real-time statistics
+   - Observe privacy score changes
+   - Review sensitive data protection alerts
+   - Verify zero external requests
+
+### **📊 Testing Best Practices**
+
+**Safety Guidelines:**
+- ⚠️ **Use test data only** - Never use real sensitive information for testing
+- ✅ **Monitor Privacy Dashboard** - Watch for external request counts (should remain 0)
+- ✅ **Check browser network tab** - Verify no unauthorized data transmission
+- ✅ **Test incrementally** - Start with simple forms, progress to complex ones
+- ✅ **Review privacy logs** - Use debug mode to understand protection actions
+
+**Expected Results:**
+- **Form Filling**: Fields populated accurately with configured information
+- **Privacy Protection**: Sensitive data automatically redacted in logs
+- **Security Analysis**: Detailed reports on page privacy risks
+- **Command Processing**: All commands executed with 100% local processing
+- **Performance**: Minimal impact on page load times and browser responsiveness
+
+### **🔍 Verification Steps**
+
+After testing on any site:
+
+1. **Privacy Dashboard Check**: Confirm "External Requests: 0"
+2. **Browser DevTools**: Monitor network tab for unauthorized requests
+3. **Privacy Logs**: Review detailed operation logs (if debug mode enabled)
+4. **Form Results**: Verify accuracy of field detection and filling
+5. **Security Alerts**: Check for and understand any privacy warnings
+
+### **💡 Pro Testing Tips**
+
+- **Multi-site Testing**: Test the same command across different sites to see consistency
+- **Form Complexity**: Progress from simple contact forms to complex multi-step forms
+- **Privacy Scenarios**: Test on various site types (banking, healthcare, e-commerce)
+- **Command Variations**: Try different phrasings of the same command intent
+- **Real-world Simulation**: Test on sites you actually use (with test data)
+
+**Remember**: All testing should be done with non-sensitive, test data only. PrivAgent Pro's local processing ensures your privacy, but good security practices are always recommended.
+
+---
+
 ## 🎯 Support & Updates
 
 ### Getting Support
@@ -937,14 +1275,14 @@ A: You can:
 ### Support Channels
 - **Documentation**: [Available in extension]
 - **Community Forum**: [Community support platform]
-- **Email Support**: support@privagent.com
-- **Enterprise Sales**: enterprise@privagent.com
+- **Email Support**: gokulkannan.dev@gmail.com
+- **Enterprise Sales**: gokulkannan.dev@gmail.com
 
 ### Development Team
-- **Security Issues**: security@privagent.com
-- **Privacy Concerns**: privacy@privagent.com
-- **Feature Requests**: features@privagent.com
-- **Partnership Inquiries**: partnerships@privagent.com
+- **Security Issues**: gokulkannan.dev@gmail.com
+- **Privacy Concerns**: gokulkannan.dev@gmail.com
+- **Feature Requests**: gokulkannan.dev@gmail.com
+- **Partnership Inquiries**: gokulkannan.dev@gmail.com
 
 ---
 

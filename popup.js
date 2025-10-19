@@ -52,7 +52,7 @@ class PrivAgentPopup {
       }
     } catch (error) {
       console.error('Error loading privacy stats:', error);
-      // Use default stats if loading fails
+      // Use actual stats - no fake defaults
       this.privacyStats = {
         privacyScore: 100,
         localProcessingPercentage: 100,
@@ -170,7 +170,20 @@ class PrivAgentPopup {
       if (response.result.success) {
         responseText = `✅ ${response.intent} completed successfully`;
         if (response.result.message) {
-          responseText += `\n${response.result.message}`;
+          responseText = `✅ ${response.result.message}`;
+        }
+        // Show form filling details
+        if (response.result.details) {
+          const details = response.result.details;
+          if (details.filled || details.clicked || details.warnings) {
+            let detailText = '\n🔍 Details:';
+            if (details.filled) detailText += ` ${details.filled} fields filled`;
+            if (details.clicked) detailText += `, ${details.clicked} buttons clicked`;
+            if (details.warnings && details.warnings.length) {
+              detailText += `\n⚠️ ${details.warnings.length} warnings`;
+            }
+            responseText += detailText;
+          }
         }
         if (response.result.privacyFiltered) {
           responseText += `\n🛡️ ${response.result.filteredItems || 0} sensitive items protected`;
@@ -201,62 +214,52 @@ class PrivAgentPopup {
         return;
       }
 
-      // Get user form data
-      const settingsResponse = await chrome.runtime.sendMessage({ action: 'getSettings' });
-      
-      if (!settingsResponse?.success) {
-        this.showNotification('Please configure your form data in settings first', 'warning');
-        return;
-      }
-
       // Check if tab is a valid webpage
       if (this.currentTab.url?.startsWith('chrome://') || this.currentTab.url?.startsWith('edge://') || this.currentTab.url?.startsWith('moz-extension://')) {
         this.showNotification('❌ Cannot fill forms on browser pages', 'warning');
         return;
       }
 
-      // Send form fill command to active tab
-      let response;
-      try {
-        const formData = {
-          name: 'John Doe',
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'john.doe@example.com',
-          phone: '+1-555-123-4567',
-          address: '123 Main Street',
-          city: 'Anytown',
-          state: 'CA',
-          zip: '12345',
-          country: 'United States'
-        };
-        
-        response = await chrome.tabs.sendMessage(this.currentTab.id, {
-          action: 'fillFormPrivately',
-          data: formData
-        });
-      } catch (messageError) {
-        if (messageError.message.includes('Could not establish connection') || messageError.message.includes('Receiving end does not exist')) {
-          this.showNotification('🔄 Content script loading... Please refresh the page and try again', 'warning');
-          return;
-        } else {
-          throw messageError;
-        }
-      }
+      // Show loading state
+      this.showNotification('🔄 Filling forms privately...', 'info');
+
+      // Send fillForm action to background script (not directly to content script)
+      const response = await chrome.runtime.sendMessage({
+        action: 'fillForm',
+        tabId: this.currentTab.id
+      });
 
       if (response?.success) {
-        this.showNotification(
-          `✅ Forms filled privately: ${response.filledFields || 0} fields, ${response.filteredData || 0} items protected`,
-          'success'
-        );
+        const filled = response.filled || 0;
+        const clicked = response.clicked || 0;
+        const warnings = response.warnings?.length || 0;
+        
+        let message = `✅ Form filled: ${filled} fields`;
+        if (clicked > 0) message += `, ${clicked} buttons clicked`;
+        if (warnings > 0) message += `, ${warnings} warnings`;
+        
+        this.showNotification(message, 'success');
+        
+        // Show detailed results if available
+        if (response.domain) {
+          console.log(`Form filling completed on ${response.domain}:`, response);
+        }
         
         // Update stats
         this.loadPrivacyStats().then(() => this.updateUI());
       } else {
-        this.showNotification(`❌ Failed to fill forms: ${response?.error || 'Unknown error'}`, 'error');
+        let errorMsg = response?.error || 'Unknown error';
+        if (errorMsg === 'No Agent Form Details saved') {
+          errorMsg = 'Please configure form data in Privacy Settings first';
+        }
+        this.showNotification(`❌ ${errorMsg}`, 'error');
       }
     } catch (error) {
-      this.showNotification(`❌ Error: ${error.message}`, 'error');
+      if (error.message.includes('Could not establish connection')) {
+        this.showNotification('🔄 Extension loading... Please try again', 'warning');
+      } else {
+        this.showNotification(`❌ Error: ${error.message}`, 'error');
+      }
     }
   }
 

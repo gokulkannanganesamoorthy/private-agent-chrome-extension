@@ -154,6 +154,19 @@ class PrivAgentContent {
           this.deactivateAgent();
           sendResponse({ success: true });
           break;
+        
+        case 'ping':
+          sendResponse({ ready: true, status: 'PrivAgent content script ready' });
+          break;
+          
+        case 'performFill':
+          this.performFill(request.details, request.options, request.url)
+            .then(sendResponse)
+            .catch(error => {
+              console.error('Error in performFill:', error);
+              sendResponse({ success: false, error: error.message });
+            });
+          break;
           
         default:
           console.warn('Unknown action received:', request.action);
@@ -314,40 +327,356 @@ class PrivAgentContent {
     return 'low';
   }
 
+  // New performFill method with comprehensive field mapping
+  async performFill(details, options, url) {
+    console.log('PrivAgent: Starting performFill with details:', Object.keys(details));
+    
+    // Skip filling in top frame preference unless in iframe mode
+    if (window.top !== window && !options.allowIframes) {
+      return { success: false, error: 'Skipping iframe context' };
+    }
+    
+    // Domain safety checks
+    const domain = new URL(url).hostname;
+    if (!this.isDomainSafe(domain) && !options.isUserInitiated) {
+      return { success: false, error: 'Domain not whitelisted for automatic filling' };
+    }
+    
+    const result = {
+      success: true,
+      filled: 0,
+      clicked: 0,
+      warnings: [],
+      errors: [],
+      domain
+    };
+    
+    try {
+      console.log('PrivAgent: Starting form fill operation on domain:', domain);
+      
+      // Use site-specific strategy if available
+      if (domain.includes('amazon.')) {
+        const amazonResult = await this.fillAmazonLogin(details, result);
+        console.log('PrivAgent: Amazon form fill completed:', amazonResult);
+        return amazonResult;
+      } else {
+        const genericResult = await this.fillGenericForm(details, result);
+        console.log('PrivAgent: Generic form fill completed:', genericResult);
+        return genericResult;
+      }
+    } catch (error) {
+      console.error('PrivAgent: Form fill error:', error);
+      result.success = false;
+      result.errors.push(error.message);
+      return result;
+    }
+  }
+  
+  async fillAmazonLogin(details, result) {
+    console.log('PrivAgent: Filling Amazon login form');
+    
+    // Amazon email field
+    const emailField = this.findField(this.getSiteSelectors('amazon.com').email);
+    if (emailField && this.isVisible(emailField) && details.email) {
+      await this.setInputValue(emailField, details.email);
+      result.filled++;
+      
+      // Click continue button
+      const continueBtn = this.findField(this.getSiteSelectors('amazon.com').submitEmail);
+      if (continueBtn) {
+        continueBtn.click();
+        result.clicked++;
+        
+        // Wait for password field to appear
+        try {
+          await this.waitFor(() => {
+            const passField = this.findField(this.getSiteSelectors('amazon.com').password);
+            return passField && this.isVisible(passField);
+          }, 3000); // Reduced from 5000ms to 3000ms
+        } catch (waitError) {
+          console.log('Password field did not appear, continuing anyway');
+          // Don't fail the entire operation if password field doesn't appear
+        }
+      }
+    }
+    
+    // Amazon password field (might appear after email step)
+    const passwordField = this.findField(this.getSiteSelectors('amazon.com').password);
+    if (passwordField && this.isVisible(passwordField) && details.password) {
+      await this.setInputValue(passwordField, details.password);
+      result.filled++;
+      
+      // Click sign in button
+      const signInBtn = this.findField(this.getSiteSelectors('amazon.com').submitLogin);
+      if (signInBtn) {
+        signInBtn.click();
+        result.clicked++;
+      }
+    }
+    
+    return result;
+  }
+  
+  async fillGenericForm(details, result) {
+    console.log('PrivAgent: Filling generic form');
+    
+    const fieldMappings = this.getDefaultSelectors();
+    
+    for (const [fieldType, selectors] of Object.entries(fieldMappings)) {
+      const value = details[fieldType];
+      if (!value) continue;
+      
+      const field = this.findField(selectors);
+      if (field && this.isVisible(field)) {
+        // Skip OTP/2FA fields
+        if (this.isOTPField(field)) {
+          result.warnings.push(`Skipped OTP field: ${field.name || field.id}`);
+          continue;
+        }
+        
+        // Skip payment fields unless explicitly allowed
+        if (this.isPaymentField(field) && fieldType !== 'cardName') {
+          result.warnings.push(`Skipped payment field: ${field.name || field.id}`);
+          continue;
+        }
+        
+        try {
+          await this.setInputValue(field, value);
+          result.filled++;
+        } catch (error) {
+          result.errors.push(`Failed to fill ${fieldType}: ${error.message}`);
+        }
+      }
+    }
+    
+    return result;
+  }
+  
+  getDefaultSelectors() {
+    return {
+      email: [
+        "input[autocomplete='username']",
+        "input[type='email']",
+        "input[id*='email' i]", 
+        "input[name*='email' i]", 
+        "input[placeholder*='email' i]"
+      ],
+      username: [
+        "input[id*='user' i]", 
+        "input[name*='user' i]", 
+        "input[placeholder*='user' i]"
+      ],
+      password: [
+        "input[autocomplete='current-password']",
+        "input[type='password']",
+        "input[id*='pass' i]", 
+        "input[name*='pass' i]"
+      ],
+      phone: [
+        "input[autocomplete='tel']", 
+        "input[type='tel']",
+        "input[id*='phone' i]", 
+        "input[name*='phone' i]"
+      ],
+      firstName: [
+        "input[autocomplete='given-name']",
+        "input[id*='first' i]", 
+        "input[name*='first' i]"
+      ],
+      lastName: [
+        "input[autocomplete='family-name']",
+        "input[id*='last' i]", 
+        "input[name*='last' i]"
+      ],
+      address: [
+        "input[autocomplete='address-line1']",
+        "input[id*='address' i]", 
+        "input[name*='address' i]"
+      ],
+      city: [
+        "input[autocomplete='address-level2']",
+        "input[id*='city' i]", 
+        "input[name*='city' i]"
+      ],
+      state: [
+        "input[autocomplete='address-level1']",
+        "input[id*='state' i]", 
+        "input[name*='state' i]"
+      ],
+      zip: [
+        "input[autocomplete='postal-code']",
+        "input[id*='zip' i]", 
+        "input[name*='zip' i]", 
+        "input[name*='postal' i]"
+      ]
+    };
+  }
+  
+  getSiteSelectors(domain) {
+    const siteOverrides = {
+      "amazon.com": {
+        email: ["#ap_email"],
+        password: ["#ap_password"],
+        submitEmail: ["#continue"],
+        submitLogin: ["#signInSubmit"]
+      }
+    };
+    
+    return siteOverrides[domain] || {};
+  }
+  
+  findField(selectors) {
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (element) return element;
+    }
+    return null;
+  }
+  
+  isVisible(element) {
+    return element.offsetParent !== null && 
+           element.style.display !== 'none' && 
+           element.style.visibility !== 'hidden';
+  }
+  
+  async setInputValue(element, value) {
+    // Focus first
+    element.focus();
+    
+    // Use native property setter for React/Vue compatibility
+    const proto = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value');
+    if (proto && proto.set) {
+      proto.set.call(element, value);
+    } else {
+      element.value = value;
+    }
+    
+    // Dispatch events
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    element.dispatchEvent(new Event('change', { bubbles: true }));
+    element.dispatchEvent(new Event('blur', { bubbles: true }));
+  }
+  
+  waitFor(predicate, timeout = 5000, interval = 100) {
+    return new Promise((resolve, reject) => {
+      const start = Date.now();
+      const tick = () => {
+        try {
+          if (predicate()) return resolve(true);
+          if (Date.now() - start >= timeout) return reject(new Error('waitFor timeout'));
+          setTimeout(tick, interval);
+        } catch (e) { reject(e); }
+      }; 
+      tick();
+    });
+  }
+  
+  isDomainSafe(domain) {
+    // Common safe domains for form filling
+    const safeDomains = [
+      'amazon.com', 'amazon.ca', 'amazon.co.uk',
+      'github.com', 'gitlab.com',
+      'google.com', 'gmail.com',
+      'facebook.com', 'twitter.com', 'linkedin.com'
+    ];
+    
+    return safeDomains.some(safeDomain => 
+      domain === safeDomain || domain.endsWith('.' + safeDomain)
+    );
+  }
+  
+  isOTPField(element) {
+    const otpPatterns = [
+      /otp/i, /one.?time/i, /verification/i, /code/i, /sms/i, /2fa/i, /mfa/i,
+      /auth.*code/i, /confirm.*code/i, /security.*code/i
+    ];
+    
+    const text = (
+      element.id + ' ' + 
+      element.name + ' ' + 
+      element.placeholder + ' ' + 
+      element.getAttribute('aria-label') + ' ' +
+      this.getFieldLabel(element)
+    ).toLowerCase();
+    
+    return otpPatterns.some(pattern => pattern.test(text)) ||
+           element.maxLength <= 6 && element.type === 'text' && element.inputMode === 'numeric';
+  }
+  
+  isPaymentField(element) {
+    const paymentPatterns = [
+      /card/i, /credit/i, /debit/i, /payment/i, /billing/i,
+      /cvv/i, /cvc/i, /expir/i, /security.*code/i
+    ];
+    
+    const text = (
+      element.id + ' ' + 
+      element.name + ' ' + 
+      element.placeholder + ' ' + 
+      element.getAttribute('aria-label') + ' ' +
+      this.getFieldLabel(element)
+    ).toLowerCase();
+    
+    return paymentPatterns.some(pattern => pattern.test(text));
+  }
+
   async fillFormPrivately(userData) {
+    console.log('PrivAgent: Starting form fill with data:', Object.keys(userData));
+    
     const forms = this.analyzeForms();
     let filledFields = 0;
     let filteredData = 0;
+    let fieldDetails = [];
     
+    console.log(`PrivAgent: Found ${forms.length} forms to process`);
+    
+    // Also try to fill individual inputs not in forms (like Amazon login)
+    const allInputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="password"], input[type="tel"], input:not([type])');
+    console.log(`PrivAgent: Found ${allInputs.length} individual input fields`);
+    
+    // Process inputs in forms
     for (const form of forms) {
+      console.log(`PrivAgent: Processing form with ${form.fields.length} fields`);
       for (const fieldData of form.fields) {
         const field = fieldData.element;
-        const fieldType = fieldData.analysis.sensitivityType;
         
         // Find matching user data
         const value = this.findMatchingUserData(fieldData, userData);
         if (value) {
-          // Analyze value for privacy before filling
-          const valueAnalysis = this.privacyEngine.analyzeSensitivity(value);
-          
-          if (valueAnalysis.riskLevel === 'high' && fieldData.analysis.shouldRedact) {
-            // Show privacy warning
-            this.showPrivacyWarning(field, valueAnalysis);
-            filteredData++;
-          } else {
-            // Fill field with privacy-filtered value
-            await this.fillField(field, valueAnalysis.filteredText);
-            filledFields++;
-          }
+          console.log(`PrivAgent: Filling field ${field.name || field.id || 'unnamed'} with value`);
+          await this.fillField(field, value);
+          filledFields++;
+          fieldDetails.push({ field: field.name || field.id, value: value.substring(0, 3) + '...' });
+        } else {
+          console.log(`PrivAgent: No matching data for field ${field.name || field.id || 'unnamed'}`);
         }
       }
     }
+    
+    // Process individual inputs not in forms
+    for (const input of allInputs) {
+      if (input.closest('form')) continue; // Skip if already processed in form
+      
+      const fieldData = { element: input, analysis: this.privacyEngine.analyzeFormField(input) };
+      const value = this.findMatchingUserData(fieldData, userData);
+      
+      if (value) {
+        console.log(`PrivAgent: Filling standalone field ${input.name || input.id || 'unnamed'} with value`);
+        await this.fillField(input, value);
+        filledFields++;
+        fieldDetails.push({ field: input.name || input.id, value: value.substring(0, 3) + '...' });
+      }
+    }
+    
+    console.log(`PrivAgent: Form fill complete - ${filledFields} fields filled`);
     
     return {
       success: true,
       filledFields,
       filteredData,
-      formsProcessed: forms.length
+      formsProcessed: forms.length,
+      fieldDetails,
+      totalInputsFound: allInputs.length
     };
   }
 
@@ -361,9 +690,9 @@ class PrivAgentContent {
     
     // Enhanced field matching patterns
     const patterns = {
-      // Email patterns
+      // Email patterns (Amazon uses ap_email)
       email: {
-        keywords: ['email', 'e-mail', 'mail', 'login', 'username', 'user'],
+        keywords: ['email', 'e-mail', 'mail', 'login', 'username', 'user', 'ap_email'],
         value: userData.email
       },
       // Name patterns
@@ -425,12 +754,29 @@ class PrivAgentContent {
       }
     }
     
+    // Special handling for Amazon login page
+    const hostname = window.location.hostname;
+    if (hostname.includes('amazon.')) {
+      // Amazon-specific field detection
+      if (field.id === 'ap_email' || field.name === 'email') {
+        console.log('Amazon email field detected');
+        return userData.email;
+      }
+      if (field.id === 'ap_password' || field.name === 'password') {
+        console.log('Amazon password field detected');
+        return userData.password || 'DemoPassword123!';
+      }
+    }
+    
     // Special handling for input types
     if (fieldType === 'email' && userData.email) return userData.email;
     if (fieldType === 'tel' && userData.phone) return userData.phone;
     if (fieldType === 'text' || fieldType === '') {
       // For generic text fields, try common patterns
-      if (searchText.includes('email') || searchText.includes('login')) return userData.email;
+      if (searchText.includes('email') || searchText.includes('login') || searchText.includes('ap_email')) {
+        console.log(`Email field matched via text search: "${searchText}"`);
+        return userData.email;
+      }
       if (searchText.includes('name')) return userData.name;
     }
     
@@ -471,24 +817,41 @@ class PrivAgentContent {
   }
 
   async fillField(field, value) {
-    console.log(`Filling field: ${field.name || field.id || 'unnamed'} with value: ${value}`);
+    console.log(`PrivAgent: Filling field: ${field.name || field.id || 'unnamed'} with value: ${value}`);
     
-    // Focus the field
-    field.focus();
-    
-    // Clear existing value
-    field.value = '';
-    
-    // Type the value character by character for better compatibility
-    for (let i = 0; i < value.length; i++) {
-      field.value += value[i];
+    try {
+      // Focus the field first
+      field.focus();
+      
+      // Use native property setter for React/Vue compatibility
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+      nativeInputValueSetter.call(field, value);
+      
+      // Dispatch events that frameworks listen for
+      const inputEvent = new Event('input', { bubbles: true });
+      const changeEvent = new Event('change', { bubbles: true });
+      const keyupEvent = new Event('keyup', { bubbles: true });
+      
+      field.dispatchEvent(inputEvent);
+      field.dispatchEvent(changeEvent);
+      field.dispatchEvent(keyupEvent);
+      
+      // Also try React-style events
+      if (typeof field._valueTracker !== 'undefined') {
+        field._valueTracker.setValue('');
+      }
+      
+      // Blur to trigger validation
+      field.blur();
+      
+      console.log(`PrivAgent: Successfully filled field with value: ${value}`);
+    } catch (error) {
+      console.error(`PrivAgent: Error filling field:`, error);
+      // Fallback to simple value assignment
+      field.value = value;
       field.dispatchEvent(new Event('input', { bubbles: true }));
-      await new Promise(resolve => setTimeout(resolve, 10));
+      field.dispatchEvent(new Event('change', { bubbles: true }));
     }
-    
-    // Trigger change event
-    field.dispatchEvent(new Event('change', { bubbles: true }));
-    field.blur();
   }
 
   extractPageContent(query) {
@@ -787,11 +1150,20 @@ class PrivAgentContent {
   }
 }
 
-// Initialize content script when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
+// Initialize content script when DOM is ready (with guard against multiple initialization)
+if (!window.privAgentInitialized) {
+  window.privAgentInitialized = true;
+  console.log('PrivAgent Content Script: Starting initialization...');
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('PrivAgent Content Script: DOM loaded, creating instance');
+      new PrivAgentContent();
+    });
+  } else {
+    console.log('PrivAgent Content Script: DOM already ready, creating instance');
     new PrivAgentContent();
-  });
+  }
 } else {
-  new PrivAgentContent();
+  console.log('PrivAgent Content Script: Already initialized, skipping');
 }

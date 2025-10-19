@@ -76,7 +76,7 @@ class PrivAgentBackground {
         };
       },
       
-      getAdvancedStats: () => this.getComprehensiveStats(),
+      getAdvancedStats: () => this.getBasicStats(),
       resetStats: () => this.resetPrivacyStats()
     };
   }
@@ -136,10 +136,17 @@ class PrivAgentBackground {
             request.text, 
             request.context || {}
           );
+          
+          // Update privacy stats based on analysis
+          this.privacyStats.itemsProcessed += 1;
+          if (analysis.sensitiveData && analysis.sensitiveData.length > 0) {
+            this.privacyStats.itemsFiltered += analysis.sensitiveData.length;
+          }
+          
           sendResponse({
             success: true,
             analysis: analysis,
-            stats: this.privacyEngine.getStats()
+            stats: this.getComprehensiveStats()
           });
           break;
 
@@ -159,7 +166,11 @@ class PrivAgentBackground {
           break;
 
         case 'fillForm':
-          const fillTabId = sender.tab ? sender.tab.id : this.activeTab;
+          const fillTabId = request.tabId || (sender.tab ? sender.tab.id : this.activeTab);
+          if (!fillTabId) {
+            sendResponse({ success: false, error: 'No active tab available' });
+            break;
+          }
           const fillResult = await this.handleFormFilling(
             request.formData,
             fillTabId
@@ -224,8 +235,8 @@ class PrivAgentBackground {
       // Analyze command for privacy implications - be less restrictive for basic commands
       const commandAnalysis = this.privacyEngine.analyzeSensitivity(command);
       
-      // Only block if command contains actual sensitive data (emails, phones, SSNs, etc.)
-      if (commandAnalysis.riskLevel === 'HIGH' && commandAnalysis.sensitiveData.length > 0) {
+      // Allow form filling commands always - never block user-initiated form fills
+      if (intent.type !== 'fillForm' && commandAnalysis.riskLevel === 'HIGH' && commandAnalysis.sensitiveData.length > 0) {
         // Allow common action words but block actual sensitive data
         const hasSensitiveData = commandAnalysis.sensitiveData.some(data => 
           ['email', 'phone', 'ssn', 'creditCard'].includes(data.type)
@@ -334,42 +345,43 @@ class PrivAgentBackground {
       case 'fillForm':
         if (tabId) {
           try {
-            // Get user settings for form data
-            const settings = await this.getUserSettings();
-            const defaultFormData = {
-              name: 'John Doe',
-              firstName: 'John',
-              lastName: 'Doe',
-              email: 'john.doe@example.com',
-              phone: '+1-555-123-4567',
-              address: '123 Main Street',
-              city: 'Anytown',
-              state: 'CA',
-              zip: '12345',
-              country: 'United States'
-            };
+            // Use the same reliable handleFormFilling method as the working button
+            const result = await this.handleFormFilling(null, tabId);
             
-            const response = await chrome.tabs.sendMessage(tabId, { 
-              action: 'fillFormPrivately',
-              data: defaultFormData
-            });
-            
-            if (response && response.success) {
+            if (result && result.success) {
+              const filled = result.filled || 0;
+              const clicked = result.clicked || 0;
+              const warnings = result.warnings?.length || 0;
+              
+              let message = `Form filled: ${filled} fields`;
+              if (clicked > 0) message += `, ${clicked} buttons clicked`;
+              if (warnings > 0) message += `, ${warnings} warnings`;
+              
               return { 
-                message: `Form filled: ${response.filledFields || 0} fields completed, ${response.filteredData || 0} items protected`, 
+                message: message,
                 success: true, 
                 action: 'fillForm',
-                details: response
+                details: result
               };
             } else {
-              return { message: 'Form filling completed privately', success: true, action: 'fillForm' };
+              return { 
+                message: result?.error || 'Form filling failed', 
+                success: false, 
+                action: 'fillForm',
+                error: result?.error
+              };
             }
           } catch (error) {
             console.error('Form filling error:', error);
-            return { message: 'Form filling requested - will retry when content script is ready', success: true, action: 'fillForm' };
+            return { 
+              message: 'Form filling failed: ' + error.message, 
+              success: false, 
+              action: 'fillForm',
+              error: error.message
+            };
           }
         }
-        return { message: 'Form filling initiated privately', success: true, action: 'fillForm' };
+        return { message: 'No active tab available', success: false, action: 'fillForm', error: 'No tab ID' };
       
       case 'navigate':
         if (intent.parameters?.url) {
@@ -440,30 +452,153 @@ class PrivAgentBackground {
   }
 
   async handleFormFilling(formData, tabId) {
+    console.log('Starting form filling process...');
+    
+    // Try both storage keys for backward compatibility
+    const storage = await chrome.storage.sync.get(['agentFormDetails', 'userFormData']);
+    const details = formData || storage.agentFormDetails || storage.userFormData || {};
+    
+    console.log('Form data available:', Object.keys(details));
+    
+    if (!Object.keys(details || {}).length) {
+      return { success: false, error: 'No Agent Form Details saved' };
+    }
+    
     try {
-      // Analyze form data for sensitive information
-      const analysis = this.privacyEngine.analyzeSensitivity(JSON.stringify(formData));
+      // Ensure content script is ready
+      await this.ensureContentScript(tabId);
       
-      // Update privacy stats safely
-      if (this.privacyStats) {
-        this.privacyStats.itemsProcessed += 1;
-        this.privacyStats.itemsFiltered += analysis.sensitiveData?.length || 0;
-        this.privacyStats.totalDataFiltered = this.privacyStats.itemsFiltered;
+      // Get page info
+      const pageInfo = await chrome.tabs.get(tabId);
+      console.log('Filling form on:', pageInfo.url);
+      
+      const payload = { 
+        action: 'performFill', 
+        details, 
+        options: { isUserInitiated: true }, 
+        url: pageInfo.url 
+      };
+      
+      console.log('Sending performFill message...');
+      const result = await this.sendMessageWithAck(tabId, payload, 15000); // Increased to 15 seconds
+      console.log('Form filling result:', result);
+      
+      // Update privacy stats based on form filling results
+      if (result && result.success) {
+        this.privacyStats.itemsProcessed += (result.filled || 0);
+        
+        // Count privacy protection actions (OTP skips, payment field blocks, etc.)
+        if (result.warnings && result.warnings.length > 0) {
+          this.privacyStats.itemsFiltered += result.warnings.length;
+        }
+        
+        console.log('Updated privacy stats:', this.privacyStats);
       }
       
-      return {
-        success: true,
-        privacyFiltered: analysis.sensitiveData?.length || 0,
-        stats: this.getComprehensiveStats()
-      };
+      return result;
     } catch (error) {
-      console.error('Form filling analysis error:', error);
-      return {
-        success: true,
-        privacyFiltered: 0,
-        stats: this.getBasicStats()
+      console.error('Form filling process failed:', error);
+      
+      // Provide a more helpful error message
+      let errorMessage = 'Form filling failed';
+      if (error.message.includes('Cannot inject content script on browser pages')) {
+        errorMessage = 'Cannot fill forms on browser pages (chrome://, etc.)';
+      } else if (error.message.includes('Timeout waiting for response')) {
+        errorMessage = 'Form filling timed out - the page may be slow or incompatible';
+      } else {
+        errorMessage = `Form filling failed: ${error.message}`;
+      }
+      
+      return { 
+        success: false, 
+        error: errorMessage,
+        filled: 0,
+        clicked: 0,
+        warnings: [],
+        errors: [error.message]
       };
     }
+  }
+
+  async ensureContentScript(tabId) {
+    console.log('Ensuring content script on tab:', tabId);
+    
+    // First check if tab is valid
+    try {
+      const tab = await chrome.tabs.get(tabId);
+      console.log('Tab info:', tab.url, tab.status);
+      
+      // Don't inject on chrome:// pages or other restricted pages
+      if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || tab.url.startsWith('edge://') || tab.url.startsWith('moz-extension://')) {
+        throw new Error('Cannot inject content script on browser pages');
+      }
+    } catch (error) {
+      console.error('Invalid tab for content script injection:', error.message);
+      throw error;
+    }
+    
+    // Ping content script to check if ready
+    try {
+      console.log('Pinging content script...');
+      const ready = await this.sendMessageWithAck(tabId, { action: 'ping' }, 1000);
+      console.log('Content script ping response:', ready);
+      if (ready?.ready) {
+        console.log('Content script already ready');
+        return;
+      }
+    } catch (e) {
+      console.log('Content script not ready, will inject:', e.message);
+    }
+    
+    // Inject content script if not ready
+    try {
+      console.log('Injecting content script...');
+      const results = await chrome.scripting.executeScript({
+        target: { tabId, allFrames: true },
+        files: ['content.js']
+      });
+      console.log('Content script injection results:', results.length, 'frames');
+      
+      // Wait a bit for content script to initialize
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Try pinging again to confirm it's working
+      try {
+        const ready = await this.sendMessageWithAck(tabId, { action: 'ping' }, 2000);
+        console.log('Content script ready after injection:', ready);
+      } catch (pingError) {
+        console.warn('Content script still not responding after injection:', pingError.message);
+      }
+    } catch (injectionError) {
+      console.error('Failed to inject content script:', injectionError);
+      throw injectionError;
+    }
+  }
+
+  sendMessageWithAck(tabId, message, timeoutMs = 5000) {
+    return new Promise((resolve, reject) => {
+      let done = false;
+      const timer = setTimeout(() => {
+        if (!done) {
+          done = true;
+          reject(new Error('Timeout waiting for response'));
+        }
+      }, timeoutMs);
+      
+      chrome.tabs.sendMessage(tabId, message, (response) => {
+        if (done) return;
+        clearTimeout(timer);
+        done = true;
+        
+        const err = chrome.runtime.lastError;
+        if (err) {
+          reject(err);
+          return;
+        }
+        
+        resolve(response);
+      });
+    });
   }
 
   async analyzePageContext(tabId, url) {
@@ -581,10 +716,20 @@ class PrivAgentBackground {
   }
 
   resetPrivacyStats() {
+    // Reset the stats object
+    this.privacyStats = {
+      itemsProcessed: 0,
+      itemsFiltered: 0,
+      externalRequests: 0,
+      sessionStartTime: Date.now()
+    };
+    
+    // Also reset privacy engine stats if available
     if (this.privacyEngine.resetStats) {
       this.privacyEngine.resetStats();
     }
-    console.log('Privacy statistics reset');
+    
+    console.log('Privacy statistics reset to zero');
   }
 
   calculatePrivacyScore(stats = {}) {
