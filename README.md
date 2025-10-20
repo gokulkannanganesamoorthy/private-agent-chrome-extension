@@ -314,23 +314,38 @@ Track your protection effectiveness:
 ### File Structure (v2.0.0)
 ```
 chrome_extension/
-├── manifest.json              # Extension configuration (Manifest V3)
-├── background.js              # Enhanced service worker with form filling
-├── content.js                # Content script with Amazon login support
-├── content.css               # Enhanced content styles with privacy indicators
-├── privacy-engine-pro.js      # Professional privacy engine
-├── popup.html                # Privacy dashboard interface
-├── popup.js                  # Enhanced dashboard with real form data
-├── popup.css                 # Professional dashboard styling
-├── options.html              # Comprehensive settings page
-├── options.js                # Advanced settings with form data management
-├── options.css               # Professional settings styling
-├── USER_MANUAL.md            # Comprehensive user manual (957 lines)
-├── README.md                 # This documentation
-└── icons/                    # Extension icons and assets
-    ├── icon16.png
-    ├── icon48.png
-    └── icon128.png
+├── .gitignore                       # Git ignore file
+├── manifest.json                    # Chrome extension manifest
+├── background.js                    # Service worker/background script
+├── background-simple.js             # Simplified background script variant
+├── content.js                       # Content script for page interaction
+├── content.css                      # Content script styles
+├── popup.html                       # Extension popup UI
+├── popup.js                         # Popup functionality
+├── popup.css                        # Popup styles
+├── options.html                     # Extension options page
+├── options.js                       # Options page functionality  
+├── options.css                      # Options page styles
+├── privacy-engine.js                # Privacy detection engine
+├── privacy-engine-pro.js            # Enhanced privacy engine
+├── README.md                        # Project documentation
+├── USER_MANUAL.md                   # User guide (1289 lines)
+├── INSTALLATION.md                  # Setup instructions
+├── RELEASE_NOTES.md                 # Version history
+├── REPO_INVENTORY.md                # This file - repository structure
+├── Fixes and Debugs/               # Debug and fix documentation
+│   ├── COMMAND_FIX.md               # Command fixes
+│   ├── DEBUG_TIMEOUT.md             # Timeout debugging
+│   ├── DIAGNOSTIC.md                # Debugging information
+│   ├── STATS_FIX.md                 # Statistics fixes
+│   ├── TEST_SCENARIOS.md            # Testing documentation
+│   └── TIMEOUT_FIX.md               # Timeout solutions
+├── ppt/                             # Presentation materials
+│   ├── HACKATHON_PRESENTATION.md    # Main presentation deck (835 lines)
+│   ├── PrivAgent_Deep_Explanation.md # Comprehensive technical analysis (1334 lines)
+│   ├── PrivAgent_Hackathon_Presentation.pptx # PowerPoint presentation
+│   └── PrivAgent- Privacy-First Web Automation (Condensed).pptx # Condensed version
+└── .git/                            # Git repository metadata
 ```
 
 ### Key Technologies
@@ -394,21 +409,6 @@ We welcome contributions! Please see our contributing guidelines for:
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🏆 Hackathon Achievement
-
-**PrivAgent won the hackathon by demonstrating:**
-- Complete privacy protection without functionality loss
-- Innovative local-first AI processing approach
-- Comprehensive user privacy controls
-- Real-world applicability and business value
-- Technical excellence in Chrome extension development
-
-## 💬 User Testimonials
-
-> "PrivAgent has been a game-changer for my daily web interactions. As someone who values privacy but needs efficient form filling, this extension delivers the perfect balance. I can automate my online tasks without worrying about my sensitive data being compromised or transmitted to external servers. The local processing approach gives me complete peace of mind, and the form filling accuracy is remarkable. It's become an essential tool in my privacy toolkit."
-> 
-> — **Sarah M., Privacy-Conscious Professional**
 
 ## 🧪 Recommended Test Sites
 
