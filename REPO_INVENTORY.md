@@ -86,17 +86,22 @@ chrome_extension/
 ## Notable File Characteristics
 
 ### Large Files (>20KB)
-1. **PrivAgent- Privacy-First Web Automation (Condensed).pptx** - 204KB
-2. **USER_MANUAL.md** - 49KB  
-3. **content.js** - 36KB
-4. **HACKATHON_PRESENTATION.md** - 33KB
-5. **background.js** - 26KB
-6. **privacy-engine-pro.js** - 21KB
+1. **PrivAgent- Privacy-First Web Automation (Condensed).pptx** - 204KB (ppt/)
+2. **PrivAgent_Deep_Explanation.md** - 52KB (ppt/)
+3. **USER_MANUAL.md** - 49KB (root)
+4. **content.js** - 36KB (root)
+5. **HACKATHON_PRESENTATION.md** - 33KB (ppt/)
+6. **background.js** - 26KB (root)
+7. **privacy-engine-pro.js** - 21KB (root)
 
 ### Documentation Density
-- **Total .md files:** 12 documentation files
-- **Total documentation size:** ~180KB
-- **Lines of documentation:** 2000+ lines across all markdown files
+- **Total .md files:** 13 documentation files
+- **Total documentation size:** ~230KB
+- **Lines of documentation:** 3500+ lines across all markdown files
+- **Key documents:**
+  - PrivAgent_Deep_Explanation.md: 1334 lines
+  - USER_MANUAL.md: 1289 lines
+  - HACKATHON_PRESENTATION.md: 835 lines
 
 ### Chrome Extension Architecture
 - **Manifest V3** structure (inferred from file naming)
@@ -113,36 +118,43 @@ chrome_extension/
 ✅ **Developer-focused** - Debug guides and fix documentation  
 
 ### File Organization
-✅ **Clean structure** - Well-organized without deep nesting  
+✅ **Clean structure** - Well-organized with logical directory separation  
 ✅ **Logical naming** - Clear, descriptive filenames  
-✅ **Separation of concerns** - UI, logic, and documentation separated  
+✅ **Separation of concerns** - UI, logic, documentation, and presentations separated  
+✅ **Directory organization** - Fixes/debugs and presentations in dedicated folders  
 
 ### Development Maturity
 ✅ **Version controlled** - Active git repository  
 ✅ **Multiple variants** - Background script variations suggest iteration  
 ✅ **Comprehensive testing** - Dedicated test scenarios documentation  
+✅ **Comprehensive analysis** - Deep explanation document with complete technical analysis  
 
-## Suspected Documentation Sources
+## Key Documentation Sources
 
-### Primary Presentation
-- **HACKATHON_PRESENTATION.md** - Main slide deck for analysis
+### Primary Presentation Materials (ppt/ Directory)
+- **HACKATHON_PRESENTATION.md** - Main slide deck for analysis (835 lines)
+- **PrivAgent_Deep_Explanation.md** - Comprehensive technical analysis (1334 lines)
+- **PowerPoint presentations** - Visual presentation materials
 
-### Supporting Documentation  
+### Supporting Documentation (Root Directory) 
 - **README.md** - Project context and overview
-- **USER_MANUAL.md** - Feature explanations and usage
-- **TEST_SCENARIOS.md** - Functional requirements and testing
-
-### Technical Documentation
+- **USER_MANUAL.md** - Feature explanations and usage (1289 lines)
 - **INSTALLATION.md** - Setup and deployment
 - **RELEASE_NOTES.md** - Feature evolution and changes
+
+### Technical Documentation (Fixes and Debugs/ Directory)
+- **TEST_SCENARIOS.md** - Functional requirements and testing
 - **Debug/Fix .md files** - Implementation challenges and solutions
+- **DIAGNOSTIC.md** - System diagnostic information
 
 ## Analysis Ready
 
 This repository is well-suited for comprehensive static analysis with:
-- **Clear presentation target** - HACKATHON_PRESENTATION.md identified
-- **Rich documentation** - Multiple supporting documents
+- **Clear presentation target** - HACKATHON_PRESENTATION.md identified (ppt/)
+- **Complete technical analysis** - PrivAgent_Deep_Explanation.md with line-by-line breakdown
+- **Rich documentation** - Multiple supporting documents across directories
 - **Complete codebase** - Full Chrome extension implementation  
+- **Organized structure** - Logical directory separation for different content types
 - **Development history** - Git metadata for context
 
 ---
