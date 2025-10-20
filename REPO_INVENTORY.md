@@ -1,9 +1,5 @@
 # Repository Inventory - Chrome Extension Project
 
-**Generated:** 2025-10-20T03:22:53Z  
-**Project Root:** `/Users/gokulkannan.g/Desktop/chrome_extension`  
-**Analysis Type:** Static, read-only inventory  
-
 ## Overview
 
 This repository contains a Chrome extension project focused on privacy-preserving web automation. The project includes comprehensive documentation, presentation materials, and a full Chrome extension codebase with security and privacy features. The repository has been organized into logical directories for better structure.
